@@ -1,0 +1,404 @@
+basePath: /
+definitions:
+  models.Authentication:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.JsonResponse:
+    properties:
+      data:
+        $ref: '#/definitions/models.Post'
+      message:
+        type: string
+    type: object
+  models.Post:
+    properties:
+      caption:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        description: gorm.Model
+        type: integer
+      image:
+        type: string
+      updatedAt:
+        type: string
+      userid:
+        type: integer
+    type: object
+  models.PostSwagger:
+    properties:
+      caption:
+        type: string
+      image:
+        type: string
+    type: object
+  models.User2SignUp:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /admin:
+    get:
+      consumes:
+      - application/json
+      description: Lay trang chu Admin
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Lay trang chu Admin
+      tags:
+      - AdminIndex
+  /admin/delete/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Xoa User
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Xoa User
+      tags:
+      - DeleteUser
+  /admin/signout:
+    post:
+      consumes:
+      - application/json
+      description: Dang xuat
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Dang xuat
+      tags:
+      - SignOut
+  /post:
+    get:
+      consumes:
+      - application/json
+      description: Lay tat ca cac bai post
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Sort
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Lay tat ca cac bai post
+      tags:
+      - GetAllPosts
+  /signin:
+    post:
+      consumes:
+      - application/json
+      description: Dang nhap
+      parameters:
+      - description: Sign In
+        in: body
+        name: signin
+        required: true
+        schema:
+          $ref: '#/definitions/models.Authentication'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Dang nhap
+      tags:
+      - SignIn
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Dang ky
+      parameters:
+      - description: Sign Up
+        in: body
+        name: signup
+        required: true
+        schema:
+          $ref: '#/definitions/models.User2SignUp'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Dang ky
+      tags:
+      - SignUp
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Lay trang chu User
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Lay trang chu User
+      tags:
+      - UserIndex
+  /user/{userid}:
+    get:
+      consumes:
+      - application/json
+      description: Lay tat ca cac bai post cua user
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Sort
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Lay tat ca cac bai post cua user
+      tags:
+      - GetAllPostsByUserId
+    post:
+      consumes:
+      - application/json
+      description: Tao post
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: Create Post
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.PostSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Tao post
+      tags:
+      - CreatePost
+    put:
+      consumes:
+      - application/json
+      description: Sua post
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: Update Post
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.PostSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Sua post
+      tags:
+      - UpdatePost
+  /user/{userid}/{postid}:
+    delete:
+      consumes:
+      - application/json
+      description: Xoa post
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: Post ID
+        in: path
+        name: postid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Xoa post
+      tags:
+      - DeletePost
+    get:
+      consumes:
+      - application/json
+      description: Lay mot bai post cua user
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: Post ID
+        in: path
+        name: postid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Lay mot bai post cua user
+      tags:
+      - GetPostByUserId
+  /user/signout:
+    post:
+      consumes:
+      - application/json
+      description: Dang xuat
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Dang xuat
+      tags:
+      - SignOut
+swagger: "2.0"

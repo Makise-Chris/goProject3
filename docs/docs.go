@@ -51,7 +51,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/delete/{id}": {
+        "/admin/delete/{userid}": {
             "post": {
                 "description": "Xoa User",
                 "consumes": [
@@ -360,51 +360,6 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "Sua post",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "UpdatePost"
-                ],
-                "summary": "Sua post",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "userid",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update Post",
-                        "name": "post",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.PostSwagger"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.JsonResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.JsonResponse"
-                        }
-                    }
-                }
-            },
             "post": {
                 "description": "Tao post",
                 "consumes": [
@@ -478,6 +433,58 @@ const docTemplate = `{
                         "name": "postid",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.JsonResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.JsonResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Sua post",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UpdatePost"
+                ],
+                "summary": "Sua post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "postid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update Post",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PostSwagger"
+                        }
                     }
                 ],
                 "responses": {
@@ -569,6 +576,9 @@ const docTemplate = `{
         },
         "models.Post": {
             "type": "object",
+            "required": [
+                "caption"
+            ],
             "properties": {
                 "caption": {
                     "type": "string"

@@ -13,5 +13,5 @@ type Token struct {
 
 type JsonResponse struct {
 	Message string `json:"message"`
-	Data    Post   `json:"data"`
+	Data    []Post `json:"data"`
 }

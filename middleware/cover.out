@@ -1,0 +1,21 @@
+mode: set
+goProject3/middleware/auth.go:13.37,14.30 1 1
+goProject3/middleware/auth.go:14.30,17.17 3 1
+goProject3/middleware/auth.go:31.3,35.81 3 1
+goProject3/middleware/auth.go:42.3,42.17 1 1
+goProject3/middleware/auth.go:50.3,50.68 1 1
+goProject3/middleware/auth.go:64.3,66.5 1 1
+goProject3/middleware/auth.go:17.17,18.31 1 1
+goProject3/middleware/auth.go:25.4,29.10 3 0
+goProject3/middleware/auth.go:18.31,24.5 3 1
+goProject3/middleware/auth.go:35.81,36.59 1 1
+goProject3/middleware/auth.go:39.4,39.28 1 1
+goProject3/middleware/auth.go:36.59,38.5 1 0
+goProject3/middleware/auth.go:42.17,48.4 3 0
+goProject3/middleware/auth.go:50.68,54.33 3 1
+goProject3/middleware/auth.go:54.33,58.5 2 1
+goProject3/middleware/auth.go:58.10,58.39 1 1
+goProject3/middleware/auth.go:58.39,61.5 2 1
+goProject3/middleware/auth.go:70.32,71.30 1 1
+goProject3/middleware/auth.go:71.30,72.96 1 1
+goProject3/middleware/auth.go:72.96,78.4 3 1

@@ -1,10 +1,28 @@
 package controllers
 
 import (
-	"goProject3/models"
+	"goProject3/service"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
+
+type UserController interface {
+	DeleteUser(c *gin.Context)
+	SignUp(c *gin.Context)
+	SignIn(c *gin.Context)
+	SignOut(c *gin.Context)
+}
+
+type UserControllerImpl struct {
+	UserService service.UserService
+}
+
+func NewUserController(s service.UserService) UserController {
+	return &UserControllerImpl{
+		UserService: s,
+	}
+}
 
 //DeleteUser godoc
 //@Summary  Xoa User
@@ -16,8 +34,8 @@ import (
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Failure 401 {object} models.JsonResponse
-//@Router /admin/delete/{id} [post]
-func DeleteUser(c *gin.Context) {
+//@Router /admin/delete/{userid} [post]
+func (u *UserControllerImpl) DeleteUser(c *gin.Context) {
 	if c.Request.Header.Get("Role") != "admin" {
 		c.JSON(401, gin.H{
 			"message": "Not authorized",
@@ -26,11 +44,10 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	userId := c.Param("userid")
+	userIdInt, _ := strconv.Atoi(userId)
 
-	var dbuser models.User2
-
-	result := models.Connection.Where("id = ?", userId).First(&dbuser)
-	if result.Error != nil {
+	dbuser, err := u.UserService.GetUserById(userIdInt)
+	if err != nil {
 		c.JSON(400, gin.H{
 			"message": "This User does not exist",
 		})
@@ -42,7 +59,7 @@ func DeleteUser(c *gin.Context) {
 			"message": "Cannot delete Admin",
 		})
 	} else {
-		models.Connection.Unscoped().Delete(&dbuser)
+		u.UserService.DeleteUser(dbuser)
 		c.JSON(200, gin.H{
 			"message": "Delete User " + userId + " successfully!!",
 		})

@@ -16,15 +16,14 @@ import (
 // @BasePath /
 
 func main() {
-	models.Connection = config.GetDatabase()
+	models.Connection = models.GetSingleInstance()
 	defer config.CloseDatabase(models.Connection)
-	models.Connection.AutoMigrate(models.User2{}, models.Post{})
 
 	models.Validate = validator.New()
 
 	docs.SwaggerInfo.BasePath = "/"
 
-	router := routes.SetUpRouter()
+	router := routes.SetUpRouter(models.Connection)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	router.Run(":3000")
 }

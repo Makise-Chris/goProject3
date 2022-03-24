@@ -1,13 +1,32 @@
 package controllers
 
 import (
-	"fmt"
 	"goProject3/models"
+	"goProject3/service"
 	"goProject3/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
+
+type PostControlller interface {
+	GetAllPosts(c *gin.Context)
+	GetAllPostsByUserId(c *gin.Context)
+	GetPostByUserId(c *gin.Context)
+	CreatePost(u service.UserService) gin.HandlerFunc
+	UpdatePost(c *gin.Context)
+	DeletePost(c *gin.Context)
+}
+
+type PostControlllerImpl struct {
+	PostService service.PostService
+}
+
+func NewPostController(s service.PostService) PostControlller {
+	return &PostControlllerImpl{
+		PostService: s,
+	}
+}
 
 //GetAllPosts godoc
 //@Summary Lay tat ca cac bai post
@@ -21,23 +40,16 @@ import (
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /post [get]
-func GetAllPosts(c *gin.Context) {
+func (p *PostControlllerImpl) GetAllPosts(c *gin.Context) {
 	var posts []models.Post
 
 	pagination := utils.GeneratePaginationFromRequest(c)
 	offset := (pagination.Page - 1) * pagination.Limit
 
-	queryBuider := models.Connection.Limit(pagination.Limit).Offset(offset).Order("id " + pagination.Sort)
-	result := queryBuider.Model(&models.Post{}).Find(&posts)
+	posts, err := p.PostService.GetAllPosts(pagination.Limit, offset, pagination.Sort)
 	//result := models.Connection.Scopes(utils.Paginate(c)).Find(&posts)
 
-	fmt.Println("-------------")
-	fmt.Println(pagination)
-	fmt.Println(posts)
-	fmt.Println(len(posts))
-	fmt.Println("-------------")
-
-	if result.Error != nil {
+	if err != nil {
 		c.JSON(400, gin.H{
 			"message": "Cannot paginate",
 		})
@@ -62,18 +74,18 @@ func GetAllPosts(c *gin.Context) {
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /user/{userid} [get]
-func GetAllPostsByUserId(c *gin.Context) {
+func (p *PostControlllerImpl) GetAllPostsByUserId(c *gin.Context) {
 	var posts []models.Post
 
 	pagination := utils.GeneratePaginationFromRequest(c)
 	offset := (pagination.Page - 1) * pagination.Limit
 
 	userId := c.Param("userid")
+	userIdInt, _ := strconv.Atoi(userId)
 
-	queryBuider := models.Connection.Limit(pagination.Limit).Offset(offset).Order("id " + pagination.Sort)
-	result := queryBuider.Model(&models.Post{}).Where("user2_id = ?", userId).Find(&posts)
+	posts, err := p.PostService.GetAllPostsByUserId(userIdInt, pagination.Limit, offset, pagination.Sort)
 
-	if result.Error != nil {
+	if err != nil {
 		c.JSON(400, gin.H{
 			"message": "Cannot paginate",
 		})
@@ -96,16 +108,14 @@ func GetAllPostsByUserId(c *gin.Context) {
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /user/{userid}/{postid} [get]
-func GetPostByUserId(c *gin.Context) {
+func (p *PostControlllerImpl) GetPostByUserId(c *gin.Context) {
 	userId := c.Param("userid")
+	userIdInt, _ := strconv.Atoi(userId)
 
 	postId := c.Param("postid")
+	posiIdInt, _ := strconv.Atoi(postId)
 
-	var post models.Post
-
-	subQuery := models.Connection.Model(&models.Post{}).Where("user2_id = ?", userId)
-	subQuery.Where("id = ?", postId).Find(&post)
-
+	post, _ := p.PostService.GetPostByUserId(userIdInt, posiIdInt)
 	if post.ID == 0 {
 		c.JSON(400, gin.H{
 			"message": "This user does not have this post",
@@ -129,43 +139,46 @@ func GetPostByUserId(c *gin.Context) {
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /user/{userid} [post]
-func CreatePost(c *gin.Context) {
-	if c.Request.Header.Get("Role") == "admin" {
-		c.JSON(400, gin.H{
-			"message": "Admin cannot create post for user",
-		})
-		return
-	}
-	userId := c.Param("userid")
+func (p *PostControlllerImpl) CreatePost(u service.UserService) gin.HandlerFunc {
+	create := func(c *gin.Context) {
+		if c.Request.Header.Get("Role") == "admin" {
+			c.JSON(400, gin.H{
+				"message": "Admin cannot create post for user",
+			})
+			return
+		}
+		userId := c.Param("userid")
+		userIdInt, _ := strconv.Atoi(userId)
 
-	var user models.User2
+		_, err := u.GetUserById(userIdInt)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"message": "This User does not exist",
+			})
+			return
+		}
 
-	result := models.Connection.Where("id = ?", userId).First(&user)
-	if result.Error != nil {
-		c.JSON(400, gin.H{
-			"message": "This User does not exist",
-		})
-		return
-	}
+		var post models.Post
 
-	var post models.Post
+		c.ShouldBindJSON(&post)
 
-	c.ShouldBindJSON(&post)
-	err := models.Validate.Struct(post)
-	if err != nil {
+		message := p.PostService.ValidatePost(post)
+		if message != "" {
+			c.JSON(400, gin.H{
+				"message": message,
+			})
+			return
+		}
+
+		post.User2ID, _ = strconv.Atoi(userId)
+
+		p.PostService.CreatePost(post)
+
 		c.JSON(200, gin.H{
-			"message": "Thiếu caption",
+			"message": "Create post successfully!!",
 		})
-		return
 	}
-
-	post.User2ID, _ = strconv.Atoi(userId)
-
-	models.Connection.Create(&post)
-
-	c.JSON(200, gin.H{
-		"message": "Create post successfully!!",
-	})
+	return gin.HandlerFunc(create)
 }
 
 //UpdatePost godoc
@@ -175,40 +188,41 @@ func CreatePost(c *gin.Context) {
 //@Accept json
 //@Produce json
 //@Param  userid path int true "User ID"
+//@Param  postid path int true "Post ID"
 //@Param  post body models.PostSwagger true "Update Post"
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
-//@Router /user/{userid} [put]
-func UpdatePost(c *gin.Context) {
+//@Router /user/{userid}/{postid} [put]
+func (p *PostControlllerImpl) UpdatePost(c *gin.Context) {
 	userId := c.Param("userid")
+	userIdInt, _ := strconv.Atoi(userId)
 
 	postId := c.Param("postid")
+	postIdInt, _ := strconv.Atoi(postId)
 
-	var post models.Post
+	err := p.PostService.CheckUserPost(userIdInt, postIdInt)
 
-	subQuery := models.Connection.Model(&models.Post{}).Where("user2_id = ?", userId)
-	subQuery.Where("id = ?", postId).Find(&post)
-
-	if post.ID == 0 {
+	if err != nil {
 		c.JSON(400, gin.H{
 			"message": "This user does not have this post",
 		})
 		return
 	}
 
+	var post models.Post
 	c.ShouldBindJSON(&post)
-	err := models.Validate.Struct(post)
-	if err != nil {
-		c.JSON(200, gin.H{
-			"message": "Thiếu caption",
+	message := p.PostService.ValidatePost(post)
+	if message != "" {
+		c.JSON(400, gin.H{
+			"message": message,
 		})
 		return
 	}
 
-	models.Connection.Save(&post)
+	p.PostService.UpdatePost(post)
 
 	c.JSON(400, gin.H{
-		"message": "Update post " + postId + " successfully!",
+		"message": "Update post " + postId + " successfully!!",
 	})
 }
 
@@ -223,24 +237,25 @@ func UpdatePost(c *gin.Context) {
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /user/{userid}/{postid} [delete]
-func DeletePost(c *gin.Context) {
+func (p *PostControlllerImpl) DeletePost(c *gin.Context) {
 	userId := c.Param("userid")
+	userIdInt, _ := strconv.Atoi(userId)
 
 	postId := c.Param("postid")
+	posiIdInt, _ := strconv.Atoi(postId)
 
-	var post models.Post
+	err := p.PostService.CheckUserPost(userIdInt, posiIdInt)
 
-	subQuery := models.Connection.Model(&models.Post{}).Where("user2_id = ?", userId)
-	subQuery.Where("id = ?", postId).Find(&post)
-
-	if post.ID == 0 {
+	if err != nil {
 		c.JSON(400, gin.H{
 			"message": "This user does not have this post",
 		})
 		return
 	}
 
-	models.Connection.Unscoped().Delete(&post)
+	var post models.Post
+	post.ID = uint(posiIdInt)
+	p.PostService.DeletePost(post)
 	c.JSON(200, gin.H{
 		"message": "Delete post " + postId + " successfully!!",
 	})

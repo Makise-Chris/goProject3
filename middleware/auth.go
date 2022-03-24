@@ -13,6 +13,7 @@ import (
 func IsAuthorized() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie, err := c.Request.Cookie("token")
+		fmt.Println(cookie)
 		if err != nil {
 			if err == http.ErrNoCookie {
 				c.JSON(401, gin.H{

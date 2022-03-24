@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 //SignUp godoc
@@ -19,33 +18,18 @@ import (
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /signup [post]
-func SignUp(c *gin.Context) {
+func (u *UserControllerImpl) SignUp(c *gin.Context) {
 	var user models.User2
 	c.ShouldBindJSON(&user)
-	err := models.Validate.Struct(user)
-	if err != nil {
-		var message string
-
-		for _, err := range err.(validator.ValidationErrors) {
-			if err.ActualTag() == "required" {
-				message = message + "Nhập thiếu thông tin. "
-			}
-			if err.ActualTag() == "oneof" {
-				message = message + "Nhập sai role (admin hoặc user). "
-			}
-			if err.ActualTag() == "email" {
-				message = message + "Nhập sai định dạng email. "
-			}
-		}
-
+	message := u.UserService.ValidateUser(user)
+	if message != "" {
 		c.JSON(400, gin.H{
 			"message": message,
 		})
 		return
 	}
 
-	var dbuser models.User2
-	models.Connection.Where("email = ?", user.Email).First(&dbuser)
+	dbuser, _ := u.UserService.GetUserByEmail(user.Email)
 
 	if dbuser.Email != "" {
 		c.JSON(400, gin.H{
@@ -54,17 +38,17 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	user.Password, err = utils.GeneratehashPassword(user.Password)
+	user.Password, _ = utils.GeneratehashPassword(user.Password)
+	err := u.UserService.CreateUser(user)
 	if err != nil {
 		c.JSON(400, gin.H{
-			"message": "Error in hashing password",
+			"message": "Cannot create user",
 		})
 		return
 	}
 
-	models.Connection.Create(&user)
 	c.JSON(200, gin.H{
-		"message": "Sign Up successfully!!",
+		"message": "Sign up successfully!!",
 	})
 }
 
@@ -78,30 +62,18 @@ func SignUp(c *gin.Context) {
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
 //@Router /signin [post]
-func SignIn(c *gin.Context) {
+func (u *UserControllerImpl) SignIn(c *gin.Context) {
 	var authDetails models.Authentication
 	c.ShouldBindJSON(&authDetails)
-	err := models.Validate.Struct(authDetails)
-	if err != nil {
-		var message string
-
-		for _, err := range err.(validator.ValidationErrors) {
-			if err.ActualTag() == "required" {
-				message = message + "Nhập thiếu thông tin. "
-			}
-			if err.ActualTag() == "email" {
-				message = message + "Nhập sai định dạng email. "
-			}
-		}
-
+	message := u.UserService.ValidateAuth(authDetails)
+	if message != "" {
 		c.JSON(400, gin.H{
 			"message": message,
 		})
 		return
 	}
 
-	var authUser models.User2
-	models.Connection.Where("email = ?", authDetails.Email).First(&authUser)
+	authUser, _ := u.UserService.GetUserByEmail(authDetails.Email)
 	if authUser.Email == "" {
 		c.JSON(400, gin.H{
 			"message": "Email is incorrect",
@@ -152,7 +124,7 @@ func SignIn(c *gin.Context) {
 //@Success 200 {object} models.JsonResponse
 //@Router /user/signout [post]
 //@Router /admin/signout [post]
-func SignOut(c *gin.Context) {
+func (u *UserControllerImpl) SignOut(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:  "token",
 		Value: "",

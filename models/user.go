@@ -1,14 +1,17 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import "time"
 
 type User2 struct {
-	gorm.Model
-	Name     string `json:"name" validate:"required"`
-	Email    string `gorm:"unique" json:"email"  validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	Role     string `json:"role" validate:"required,oneof=admin user"`
-	Posts    []Post `json:"posts"`
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `sql:"index"`
+	Name      string     `json:"name" validate:"required"`
+	Email     string     `gorm:"unique" json:"email"  validate:"required,email"`
+	Password  string     `json:"password" validate:"required"`
+	Role      string     `json:"role" validate:"required,oneof=admin user"`
+	Posts     []Post     `json:"posts"`
 }
 
 type User2SignUp struct {

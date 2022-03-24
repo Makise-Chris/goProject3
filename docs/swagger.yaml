@@ -34,6 +34,8 @@ definitions:
         type: string
       userid:
         type: integer
+    required:
+    - caption
     type: object
   models.PostSwagger:
     properties:
@@ -79,7 +81,7 @@ paths:
       summary: Lay trang chu Admin
       tags:
       - AdminIndex
-  /admin/delete/{id}:
+  /admin/delete/{userid}:
     post:
       consumes:
       - application/json
@@ -297,36 +299,6 @@ paths:
       summary: Tao post
       tags:
       - CreatePost
-    put:
-      consumes:
-      - application/json
-      description: Sua post
-      parameters:
-      - description: User ID
-        in: path
-        name: userid
-        required: true
-        type: integer
-      - description: Update Post
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/models.PostSwagger'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.JsonResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.JsonResponse'
-      summary: Sua post
-      tags:
-      - UpdatePost
   /user/{userid}/{postid}:
     delete:
       consumes:
@@ -386,6 +358,41 @@ paths:
       summary: Lay mot bai post cua user
       tags:
       - GetPostByUserId
+    put:
+      consumes:
+      - application/json
+      description: Sua post
+      parameters:
+      - description: User ID
+        in: path
+        name: userid
+        required: true
+        type: integer
+      - description: Post ID
+        in: path
+        name: postid
+        required: true
+        type: integer
+      - description: Update Post
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.PostSwagger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Sua post
+      tags:
+      - UpdatePost
   /user/signout:
     post:
       consumes:

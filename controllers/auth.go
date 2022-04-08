@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"goProject3/models"
 	"goProject3/utils"
 	"net/http"
@@ -39,10 +40,25 @@ func (u *UserControllerImpl) SignUp(c *gin.Context) {
 	}
 
 	user.Password, _ = utils.GeneratehashPassword(user.Password)
+
 	err := u.UserService.CreateUser(user)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"message": "Cannot create user",
+		})
+		return
+	}
+
+	dbuser, _ = u.UserService.GetUserByEmail(user.Email)
+
+	err = u.UserES.CreateUser(c.Request.Context(), dbuser)
+
+	if err != nil {
+		fmt.Println("---------------")
+		fmt.Println(err)
+		fmt.Println("---------------")
+		c.JSON(400, gin.H{
+			"message": "Cannot create user in ES",
 		})
 		return
 	}

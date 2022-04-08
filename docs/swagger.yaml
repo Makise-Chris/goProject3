@@ -13,7 +13,9 @@ definitions:
   models.JsonResponse:
     properties:
       data:
-        $ref: '#/definitions/models.Post'
+        items:
+          $ref: '#/definitions/models.Post'
+        type: array
       message:
         type: string
     type: object
@@ -393,6 +395,43 @@ paths:
       summary: Sua post
       tags:
       - UpdatePost
+  /user/search/{keyword}:
+    post:
+      consumes:
+      - application/json
+      description: Tim kiem user
+      parameters:
+      - description: Key word
+        in: path
+        name: keyword
+        required: true
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Sort
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.JsonResponse'
+      summary: Tim kiem user
+      tags:
+      - SearchUser
   /user/signout:
     post:
       consumes:

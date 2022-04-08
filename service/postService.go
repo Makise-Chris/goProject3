@@ -7,12 +7,14 @@ import (
 
 type PostService interface {
 	GetAllPosts(limit, offset int, sort string) ([]models.Post, error)
+	GetPostById(postId int) (models.Post, error)
 	GetAllPostsByUserId(userId, limit, offset int, sort string) ([]models.Post, error)
+	GetNewestPostByUserId(userId int) (models.Post, error)
 	GetPostByUserId(userId, postId int) (models.Post, error)
 	CheckUser(userId int) error
 	CreatePost(post models.Post) error
 	CheckUserPost(userId, postId int) error
-	UpdatePost(post models.Post) error
+	UpdatePost(post models.Post) (models.Post, error)
 	DeletePost(post models.Post) error
 	ValidatePost(post models.Post) string
 }
@@ -31,8 +33,16 @@ func (p *PostServiceImpl) GetAllPosts(limit, offset int, sort string) ([]models.
 	return p.PostRepo.GetAllPosts(limit, offset, sort)
 }
 
+func (p *PostServiceImpl) GetPostById(postId int) (models.Post, error) {
+	return p.PostRepo.GetPostById(postId)
+}
+
 func (p *PostServiceImpl) GetAllPostsByUserId(userId, limit, offset int, sort string) ([]models.Post, error) {
 	return p.PostRepo.GetAllPostsByUserId(userId, limit, offset, sort)
+}
+
+func (p *PostServiceImpl) GetNewestPostByUserId(userId int) (models.Post, error) {
+	return p.PostRepo.GetNewestPostByUserId(userId)
 }
 
 func (p *PostServiceImpl) GetPostByUserId(userId, postId int) (models.Post, error) {
@@ -47,7 +57,7 @@ func (p *PostServiceImpl) CreatePost(post models.Post) error {
 	return p.PostRepo.CreatePost(post)
 }
 
-func (p *PostServiceImpl) UpdatePost(post models.Post) error {
+func (p *PostServiceImpl) UpdatePost(post models.Post) (models.Post, error) {
 	return p.PostRepo.UpdatePost(post)
 }
 

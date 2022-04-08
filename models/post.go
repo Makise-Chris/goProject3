@@ -11,6 +11,7 @@ type Post struct {
 	Caption   string     `json:"caption" validate:"required"`
 	Image     string     `json:"image"`
 	User2ID   int        `json:"userid"`
+	Comments  []Comment  `json:"comments"`
 }
 
 type PostSwagger struct {

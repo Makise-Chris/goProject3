@@ -9,13 +9,15 @@ import (
 
 type PostRepo interface {
 	GetAllPosts(limit, offset int, sort string) ([]models.Post, error)
+	GetPostById(postId int) (models.Post, error)
 	GetAllPostsByUserId(userId, limit, offset int, sort string) ([]models.Post, error)
+	GetNewestPostByUserId(userId int) (models.Post, error)
 	GetPostByUserId(userId, postId int) (models.Post, error)
 	CheckUser(userId int) error
 	CreatePost(post models.Post) error
 	CheckUserPost(userId, postId int) error
 	Migrate() error
-	UpdatePost(post models.Post) error
+	UpdatePost(post models.Post) (models.Post, error)
 	DeletePost(post models.Post) error
 }
 
@@ -44,6 +46,12 @@ func (p *PostRepoIpml) GetAllPosts(limit, offset int, sort string) ([]models.Pos
 	return posts, result.Error
 }
 
+func (p *PostRepoIpml) GetPostById(postId int) (models.Post, error) {
+	var dbpost models.Post
+	result := p.Db.Where("id = ?", postId).First(&dbpost)
+	return dbpost, result.Error
+}
+
 func (p *PostRepoIpml) GetAllPostsByUserId(userId, limit, offset int, sort string) ([]models.Post, error) {
 	var posts []models.Post
 
@@ -51,6 +59,13 @@ func (p *PostRepoIpml) GetAllPostsByUserId(userId, limit, offset int, sort strin
 	result := queryBuider.Model(&models.Post{}).Where("user2_id = ?", userId).Find(&posts)
 
 	return posts, result.Error
+}
+
+func (p *PostRepoIpml) GetNewestPostByUserId(userId int) (models.Post, error) {
+	var post models.Post
+	result := p.Db.Model(&models.Post{}).Where("user2_id = ?", userId).Order("id desc").First(&post)
+
+	return post, result.Error
 }
 
 func (p *PostRepoIpml) GetPostByUserId(userId, postId int) (models.Post, error) {
@@ -83,9 +98,9 @@ func (p *PostRepoIpml) CheckUserPost(userId, postId int) error {
 	return result.Error
 }
 
-func (p *PostRepoIpml) UpdatePost(post models.Post) error {
+func (p *PostRepoIpml) UpdatePost(post models.Post) (models.Post, error) {
 	result := p.Db.Save(&post)
-	return result.Error
+	return post, result.Error
 }
 
 func (p *PostRepoIpml) DeletePost(post models.Post) error {

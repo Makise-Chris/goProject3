@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"goProject3/elasticsearch"
 	"goProject3/models"
 	"goProject3/service"
 	"goProject3/utils"
@@ -16,15 +17,18 @@ type PostControlller interface {
 	CreatePost(u service.UserService) gin.HandlerFunc
 	UpdatePost(c *gin.Context)
 	DeletePost(c *gin.Context)
+	SearchPost(cmt elasticsearch.CommentES) gin.HandlerFunc
 }
 
 type PostControlllerImpl struct {
 	PostService service.PostService
+	PostES      elasticsearch.PostES
 }
 
-func NewPostController(s service.PostService) PostControlller {
+func NewPostController(s service.PostService, e elasticsearch.PostES) PostControlller {
 	return &PostControlllerImpl{
 		PostService: s,
+		PostES:      e,
 	}
 }
 
@@ -107,7 +111,7 @@ func (p *PostControlllerImpl) GetAllPostsByUserId(c *gin.Context) {
 //@Param  postid path int true "Post ID"
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
-//@Router /user/{userid}/{postid} [get]
+//@Router /user/{userid}/post/{postid} [get]
 func (p *PostControlllerImpl) GetPostByUserId(c *gin.Context) {
 	userId := c.Param("userid")
 	userIdInt, _ := strconv.Atoi(userId)
@@ -172,7 +176,8 @@ func (p *PostControlllerImpl) CreatePost(u service.UserService) gin.HandlerFunc 
 
 		post.User2ID, _ = strconv.Atoi(userId)
 
-		p.PostService.CreatePost(post)
+		dbposts, _ := p.PostService.UpdatePost(post)
+		p.PostES.CreatePost(c.Request.Context(), dbposts)
 
 		c.JSON(200, gin.H{
 			"message": "Create post successfully!!",
@@ -192,7 +197,7 @@ func (p *PostControlllerImpl) CreatePost(u service.UserService) gin.HandlerFunc 
 //@Param  post body models.PostSwagger true "Update Post"
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
-//@Router /user/{userid}/{postid} [put]
+//@Router /user/{userid}/post/{postid} [put]
 func (p *PostControlllerImpl) UpdatePost(c *gin.Context) {
 	userId := c.Param("userid")
 	userIdInt, _ := strconv.Atoi(userId)
@@ -219,9 +224,12 @@ func (p *PostControlllerImpl) UpdatePost(c *gin.Context) {
 		return
 	}
 
+	post.ID = uint(postIdInt)
+	post.User2ID = userIdInt
 	p.PostService.UpdatePost(post)
+	p.PostES.CreatePost(c.Request.Context(), post)
 
-	c.JSON(400, gin.H{
+	c.JSON(200, gin.H{
 		"message": "Update post " + postId + " successfully!!",
 	})
 }
@@ -236,15 +244,15 @@ func (p *PostControlllerImpl) UpdatePost(c *gin.Context) {
 //@Param  postid path int true "Post ID"
 //@Success 200 {object} models.JsonResponse
 //@Failure 400 {object} models.JsonResponse
-//@Router /user/{userid}/{postid} [delete]
+//@Router /user/{userid}/post/{postid} [delete]
 func (p *PostControlllerImpl) DeletePost(c *gin.Context) {
 	userId := c.Param("userid")
 	userIdInt, _ := strconv.Atoi(userId)
 
 	postId := c.Param("postid")
-	posiIdInt, _ := strconv.Atoi(postId)
+	postIdInt, _ := strconv.Atoi(postId)
 
-	err := p.PostService.CheckUserPost(userIdInt, posiIdInt)
+	err := p.PostService.CheckUserPost(userIdInt, postIdInt)
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -254,9 +262,37 @@ func (p *PostControlllerImpl) DeletePost(c *gin.Context) {
 	}
 
 	var post models.Post
-	post.ID = uint(posiIdInt)
+	post.ID = uint(postIdInt)
 	p.PostService.DeletePost(post)
+	p.PostES.DeletePost(c.Request.Context(), postIdInt)
 	c.JSON(200, gin.H{
 		"message": "Delete post " + postId + " successfully!!",
 	})
+}
+
+func (p *PostControlllerImpl) SearchPost(cmt elasticsearch.CommentES) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		query := c.Param("keyword")
+
+		posts, err := p.PostES.SearchPost(c.Request.Context(), query)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"message": err,
+			})
+			return
+		}
+
+		comments, err := cmt.SearchComment(c.Request.Context(), query)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"message": err,
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"posts":    posts,
+			"comments": comments,
+		})
+	}
 }
